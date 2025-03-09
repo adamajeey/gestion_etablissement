@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage('Cloner le code') {
             steps {
-                git 'https://github.com/adamajeey/gestion_etablissement.git'
+                git branch: 'main', url: 'https://github.com/adamajeey/gestion_etablissement.git'
             }
         }
     }
