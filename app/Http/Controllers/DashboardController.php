@@ -19,8 +19,14 @@ class DashboardController extends Controller
         $totalEtudiants = Etudiant::count();
         $totalProfesseurs = Professeur::count();
 
-        // Cours du jour pour les 5 premières classes
-        $aujourdhuiJour = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'][date('N') - 1];
+        $jours = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+        $indexJour = date('N') - 1;
+
+        // Vérifier si l'index existe dans le tableau
+        $aujourdhuiJour = isset($jours[$indexJour]) ? $jours[$indexJour] : '';
+
+        echo $aujourdhuiJour;
+
 
         $emploisDuJour = EmploiDuTemps::where('jour', $aujourdhuiJour)
             ->with(['classe', 'cours', 'professeur'])
