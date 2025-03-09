@@ -1,0 +1,87 @@
+/* Variables */
+:root {
+    --couleur-principale: #2897e8;
+    --couleur-secondaire: #1a6ca8;
+    --couleur-texte: #333;
+    --couleur-fond: #f8f9fa;
+}
+
+/* Styles généraux */
+body {
+    background-color: var(--couleur-fond);
+    color: var(--couleur-texte);
+    font-family: 'Nunito', sans-serif;
+}
+
+/* Navbar */
+.navbar {
+    background-color: var(--couleur-principale);
+}
+
+.navbar-brand {
+    color: white;
+    font-weight: bold;
+}
+
+.nav-link {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.nav-link:hover {
+    color: white;
+}
+
+/* Boutons */
+.btn-primary {
+    background-color: var(--couleur-principale);
+    border-color: var(--couleur-principale);
+}
+
+.btn-primary:hover {
+    background-color: var(--couleur-secondaire);
+    border-color: var(--couleur-secondaire);
+}
+
+/* Cartes */
+.card {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.card-header {
+    background-color: rgba(40, 151, 232, 0.1);
+    font-weight: bold;
+}
+
+/* Pagination */
+.pagination .page-item.active .page-link {
+    background-color: var(--couleur-principale);
+    border-color: var(--couleur-principale);
+}
+
+.pagination .page-link {
+    color: var(--couleur-principale);
+}
+
+/* Dashboard stats */
+.dashboard-stat {
+    padding: 20px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+    text-align: center;
+    color: white;
+}
+
+.dashboard-stat h3 {
+    font-size: 2rem;
+    margin-bottom: 10px;
+}
+
+.dashboard-stat p {
+    margin-bottom: 0;
+    font-size: 1.1rem;
+}
+
+.bg-primary {
+    background-color: var(--couleur-principale) !important;
+}
