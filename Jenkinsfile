@@ -2,11 +2,12 @@ pipeline {
     agent any
 
     stages {
-        stage('Récupération du code') {
+        stage('Cloner le code') {
             steps {
-                checkout scm
+                git 'https://github.com/adamajeey/gestion_etablissement.git'
             }
         }
+
 
         stage('Installation des dépendances') {
             agent {
