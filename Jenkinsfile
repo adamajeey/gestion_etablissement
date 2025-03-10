@@ -83,14 +83,73 @@ pipeline {
                 sh 'php artisan test --testsuite=Unit || echo "Échec des tests unitaires"'
             }
         }
+
+        stage('Préparation SonarQube') {
+            steps {
+                script {
+                    // Vérifier si sonar-scanner est installé
+                    def sonarInstalled = sh(script: 'which sonar-scanner || echo "not found"', returnStdout: true).trim()
+                    if (sonarInstalled.contains("not found")) {
+                        echo "Installation de sonar-scanner..."
+                        sh '''
+                        wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.8.0.2856-linux.zip || \
+                        curl -OL https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.8.0.2856-linux.zip
+                        unzip -q sonar-scanner-cli-4.8.0.2856-linux.zip
+                        mv sonar-scanner-4.8.0.2856-linux sonar-scanner
+                        export PATH=$PATH:$(pwd)/sonar-scanner/bin
+                        '''
+                    }
+                }
+
+                // Créer le fichier de configuration SonarQube
+                sh '''
+                cat > sonar-project.properties << EOF
+sonar.projectKey=gestion-etablissement
+sonar.projectName=Gestion Etablissement
+sonar.projectVersion=1.0
+
+# Chemin vers les sources
+sonar.sources=app,resources,routes
+sonar.exclusions=vendor/**,node_modules/**,storage/**,bootstrap/cache/**
+
+# Langue du projet
+sonar.language=php
+
+# Encodage des sources
+sonar.sourceEncoding=UTF-8
+
+# Adresse du serveur SonarQube (utilisez le nom du service dans le réseau Docker)
+sonar.host.url=http://sonarqube:9000
+
+# Token d'authentification SonarQube
+sonar.login=admin
+sonar.password=admin
+EOF
+                '''
+            }
+        }
+
+        stage('Analyse SonarQube') {
+            steps {
+                sh '''
+                # Utilisez le scanner local ou global selon ce qui est disponible
+                if [ -d "sonar-scanner" ]; then
+                    export PATH=$PATH:$(pwd)/sonar-scanner/bin
+                    sonar-scanner || echo "Analyse SonarQube terminée avec des problèmes"
+                else
+                    sonar-scanner || echo "Analyse SonarQube terminée avec des problèmes"
+                fi
+                '''
+            }
+        }
     }
 
     post {
         success {
-            echo '🎉 Tests unitaires réussis !'
+            echo '🎉 Pipeline réussi ! Vérifiez les résultats dans SonarQube.'
         }
         failure {
-            echo '⚠ Erreur lors des tests, vérifiez les logs.'
+            echo '⚠ Erreur lors des tests ou analyses, vérifiez les logs.'
         }
     }
 }
