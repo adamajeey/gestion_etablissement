@@ -2,6 +2,21 @@ pipeline {
     agent any
 
     stages {
+        stage('Vérification de PHP') {
+            steps {
+                sh 'php -v' // Vérifie que PHP est bien installé
+            }
+        }
+
+        stage('Installation de Composer') {
+            steps {
+                sh 'curl -sS https://getcomposer.org/installer | php'
+                sh 'mv composer.phar /usr/local/bin/composer'
+                sh 'chmod +x /usr/local/bin/composer'
+                sh 'composer -V' // Vérifie l'installation de Composer
+            }
+        }
+
         stage('Cloner le code') {
             steps {
                 git branch: 'main', url: 'https://github.com/adamajeey/gestion_etablissement.git'
@@ -19,6 +34,7 @@ pipeline {
             steps {
                 // Préparation de l'environnement de test
                 sh 'cp .env.testing .env.testing.backup || true'
+                sh 'php artisan key:generate' // Générer la clé d'application
 
                 // Configuration de la base de données de test
                 sh 'php artisan config:clear'
