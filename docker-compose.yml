@@ -1,0 +1,54 @@
+version: '3'
+
+services:
+    # Service pour l'application PHP Laravel
+    app:
+        build:
+            args:
+                user: laravel
+                uid: 1000
+            context: ./
+            dockerfile: Dockerfile
+        image: gestion-etablissement
+        container_name: gestion-etablissement-app
+        restart: unless-stopped
+        working_dir: /var/www/
+        volumes:
+            - ./:/var/www  # Montage du code source pour le développement
+        networks:
+            - app-network
+
+    # Service Nginx pour servir l'application
+    nginx:
+        image: nginx:alpine
+        container_name: gestion-etablissement-nginx
+        restart: unless-stopped
+        ports:
+            - "8000:80"  # Exposition du port 8000 sur l'hôte
+        volumes:
+            - ./:/var/www  # Montage du code source
+            - ./docker/nginx:/etc/nginx/conf.d/  # Montage de la configuration Nginx
+        networks:
+            - app-network
+
+    # Service de base de données MySQL
+    db:
+        image: mysql:8.0
+        container_name: gestion-etablissement-db
+        restart: unless-stopped
+        environment:
+            MYSQL_DATABASE: ${DB_DATABASE}
+            MYSQL_ALLOW_EMPTY_PASSWORD: "yes"  # Permet d'utiliser un mot de passe vide pour root
+        volumes:
+            - dbdata:/var/lib/mysql  # Volume pour persister les données MySQL
+        networks:
+            - app-network
+
+# Définition des réseaux
+networks:
+    app-network:
+        driver: bridge
+
+# Définition des volumes
+volumes:
+    dbdata:  # Volume pour stocker les données MySQL
