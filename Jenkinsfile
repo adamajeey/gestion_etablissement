@@ -1,27 +1,41 @@
 pipeline {
-    agent {
-        docker {
-            image 'php:8.2-cli'
-            args '-v /var/jenkins_home/.composer:/root/.composer'
-        }
-    }
+    agent any
 
     stages {
-        stage('Vérification de PHP') {
+        stage('Vérification de l\'environnement') {
             steps {
-                sh 'php -v' // Vérifie que PHP est bien installé
+                sh 'which php || echo "PHP not installed"'
+                sh 'which composer || echo "Composer not installed"'
+                sh 'which mysql || echo "MySQL client not installed"'
             }
         }
 
-        stage('Installation des outils') {
+        stage('Installation des outils nécessaires') {
             steps {
-                sh 'apt-get update'
-                sh 'apt-get install -y git unzip libzip-dev'
-                sh 'docker-php-ext-install zip'
-                sh 'curl -sS https://getcomposer.org/installer | php'
-                sh 'mv composer.phar /usr/local/bin/composer'
-                sh 'chmod +x /usr/local/bin/composer'
-                sh 'composer -V' // Vérifie l'installation de Composer
+                // Ces commandes supposent que vous êtes sur un système Debian/Ubuntu
+                sh '''
+                if ! which php > /dev/null; then
+                    echo "Installation de PHP..."
+                    sudo apt-get update
+                    sudo apt-get install -y php php-cli php-mbstring php-xml php-zip php-mysql curl git unzip
+                fi
+                '''
+
+                sh '''
+                if ! which composer > /dev/null; then
+                    echo "Installation de Composer..."
+                    curl -sS https://getcomposer.org/installer | php
+                    sudo mv composer.phar /usr/local/bin/composer
+                    sudo chmod +x /usr/local/bin/composer
+                fi
+                '''
+
+                sh '''
+                if ! which mysql > /dev/null; then
+                    echo "Installation du client MySQL..."
+                    sudo apt-get install -y mysql-client
+                fi
+                '''
             }
         }
 
@@ -33,34 +47,28 @@ pipeline {
 
         stage('Installation des dépendances') {
             steps {
-                // Installation des dépendances PHP via Composer
                 sh 'composer install --no-interaction --no-progress'
             }
         }
 
         stage('Configuration des tests') {
             steps {
-                // Créer un fichier .env.testing s'il n'existe pas
-                sh 'test -f .env.testing || cp .env.example .env.testing'
+                // Vérifie si .env.testing existe déjà
+                sh 'test -f .env.testing || (test -f .env.example && cp .env.example .env.testing)'
 
-                // Configurer la base de données pour les tests (utiliser SQLite en mémoire)
+                // Créer la base de données de test si elle n'existe pas
                 sh '''
-                sed -i "s/DB_CONNECTION=mysql/DB_CONNECTION=sqlite/g" .env.testing
-                sed -i "s/DB_DATABASE=.*/DB_DATABASE=:memory:/g" .env.testing
+                mysql -h 127.0.0.1 -P 3308 -u root -e "CREATE DATABASE IF NOT EXISTS testing_db;"
                 '''
 
-                // Générer la clé d'application pour l'environnement de test
-                sh 'php artisan key:generate --env=testing'
+                // Générer la clé d'application pour l'environnement de test s'il n'y en a pas
+                sh 'grep -q "APP_KEY=" .env.testing && grep -q "APP_KEY=base64:" .env.testing || php artisan key:generate --env=testing'
                 sh 'php artisan config:clear'
             }
         }
 
         stage('Tests unitaires') {
             steps {
-                // Installation de SQLite et activation de PDO SQLite
-                sh 'apt-get install -y sqlite3 libsqlite3-dev'
-                sh 'docker-php-ext-install pdo_sqlite'
-
                 // Exécution des migrations dans l'environnement de test
                 sh 'php artisan migrate:fresh --env=testing --force'
 
